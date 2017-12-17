@@ -112,7 +112,7 @@ void LArPandoraInput::CreatePandoraHits2D(const Settings &settings, const LArDri
 
         // Get other hit properties here
         const double wire_pitch_cm(theGeometry->WirePitch(hit_View)); // cm
-        const double mips(LArPandoraInput::GetMips(settings, hit_Charge, hit_View));
+        const double hitEnergy(LArPandoraInput::GetHitEnergy(settings, hit_Charge));
 
         // Create Pandora CaloHit
         lar_content::LArCaloHitParameters caloHitParameters;
@@ -133,9 +133,9 @@ void LArPandoraInput::CreatePandoraHits2D(const Settings &settings, const LArDri
             caloHitParameters.m_layer = 0;
             caloHitParameters.m_isInOuterSamplingLayer = false;
             caloHitParameters.m_inputEnergy = hit_Charge;
-            caloHitParameters.m_mipEquivalentEnergy = mips;
-            caloHitParameters.m_electromagneticEnergy = mips * settings.m_mips_to_gev;
-            caloHitParameters.m_hadronicEnergy = mips * settings.m_mips_to_gev;
+            caloHitParameters.m_mipEquivalentEnergy = 0.;
+            caloHitParameters.m_electromagneticEnergy = hitEnergy;
+            caloHitParameters.m_hadronicEnergy = hitEnergy;
             caloHitParameters.m_pParentAddress = (void*)((intptr_t)(++hitCounter));
 
             if (pHitResults)
@@ -811,21 +811,15 @@ float LArPandoraInput::GetTrueX0(const art::Ptr<simb::MCParticle> &particle, con
 
 //------------------------------------------------------------------------------------------------------------------------------------------
 
-double LArPandoraInput::GetMips(const Settings &settings, const double hit_Charge, const geo::View_t hit_View)
+double LArPandoraInput::GetHitEnergy(const Settings &settings, const double hit_Charge)
 {
-    art::ServiceHandle<geo::Geometry> theGeometry;
-    auto const* theDetector = lar::providerFrom<detinfo::DetectorPropertiesService>();
-
-    // TODO: Check if this procedure is correct
-    const double dQdX(hit_Charge / (theGeometry->WirePitch(hit_View))); // ADC/cm
-    const double dQdX_e(dQdX / (theDetector->ElectronsToADC() * settings.m_recombination_factor)); // e/cm
-    double dEdX(theDetector->BirksCorrection(dQdX_e));
-
-    if ((dEdX < 0) || (dEdX > settings.m_dEdX_max))
-        dEdX = settings.m_dEdX_max;
-
-    const double mips(dEdX / settings.m_dEdX_mip);
-    return mips;
+    const double nElectrons = hitCharge / theDetector->ElectronsToADC();
+    const double hitEnergy = nElectrons * settings.m_electronsToGeV;
+    
+    if (hitEnergy < 0.)
+        hitEnergy = 0.;
+        
+    return hitEnergy;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -838,10 +832,7 @@ LArPandoraInput::Settings::Settings() :
     m_dx_cm(0.5),
     m_int_cm(84.0),
     m_rad_cm(14.0),
-    m_dEdX_max(25.0),
-    m_dEdX_mip(2.0),
-    m_mips_to_gev(3.5e-4),
-    m_recombination_factor(0.63),
+    m_electronsToGeV(23.6e-9),
     m_globalViews(false),
     m_truncateReadout(false)
 {

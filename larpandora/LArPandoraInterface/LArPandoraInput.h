@@ -39,10 +39,7 @@ public:
         double                  m_dx_cm;                    ///<
         double                  m_int_cm;                   ///<
         double                  m_rad_cm;                   ///<
-        double                  m_dEdX_max;                 ///<
-        double                  m_dEdX_mip;                 ///<
-        double                  m_mips_to_gev;              ///<
-        double                  m_recombination_factor;     ///<
+        double                  m_electronsToGeV;           ///<
         bool                    m_globalViews;              ///<
         bool                    m_truncateReadout;          ///<
     };
@@ -142,13 +139,12 @@ private:
     static float GetTrueX0(const art::Ptr<simb::MCParticle> &particle, const int nT);
 
     /**
-     *  @brief  Convert charge in ADCs to approximate MIPs
+     *  @brief  Convert charge in ADCs to energy
      *
      *  @param  settings the settings
      *  @param  hit_Charge the input charge
-     *  @param  hit_View the input view number
      */
-    static double GetMips(const Settings &settings, const double hit_Charge, const geo::View_t hit_View);
+    static double GetHitEnergy(const Settings &settings, const double hit_Charge);
 };
 
 } // namespace lar_pandora
