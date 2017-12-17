@@ -814,7 +814,7 @@ float LArPandoraInput::GetTrueX0(const art::Ptr<simb::MCParticle> &particle, con
 double LArPandoraInput::GetHitEnergy(const Settings &settings, const double hit_Charge)
 {
     const double nElectrons = hitCharge / theDetector->ElectronsToADC();
-    const double hitEnergy = nElectrons * settings.m_electronsToGeV;
+    double hitEnergy = nElectrons * settings.m_electronsToGeV;
     
     if (hitEnergy < 0.)
         hitEnergy = 0.;
