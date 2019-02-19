@@ -415,7 +415,19 @@ void LArPandoraInput::CreatePandoraMCParticles(const Settings &settings, const M
 
             try
             {
-                mcParticleParameters.m_nuanceCode = neutrino.InteractionType();
+                if (neutrino.InteractionType() == 1000) // temporary hack to encode more information
+                {
+                    const int ccnc = neutrino.CCNC(); // 0 or 1
+                    const int mode = (neutrino.Mode() == -1) ? 99 : neutrino.Mode(); // remap unknown interaction enum -1 to 99 so 0 <= mode < 100
+
+                    if (ccnc > 1 || ccnc < 0 || mode > 99 || mode < 0)
+                        throw cet::exception("LArPandora") << "CreatePandoraMCParticles - MC neutrino CCNC and/or mode values were out of bounds";
+
+                    mcParticleParameters.m_nuanceCode = 5000 + ccnc * 100 + mode;
+                }
+                else
+                    mcParticleParameters.m_nuanceCode = neutrino.InteractionType();
+
                 mcParticleParameters.m_energy = neutrino.Nu().E();
                 mcParticleParameters.m_momentum = pandora::CartesianVector(neutrino.Nu().Px(), neutrino.Nu().Py(), neutrino.Nu().Pz());
                 mcParticleParameters.m_vertex = pandora::CartesianVector(neutrino.Nu().Vx(), neutrino.Nu().Vy(), neutrino.Nu().Vz());
